@@ -1,6 +1,7 @@
 package cjcj.prettyPrinter
 
 public class PrettyPrinter {
+    public PrettyPrinter(let tabSize!: Int64 = 4) {}
     private var indentation: Int64 = 0
     private let builder: StringBuilder = StringBuilder()
 
@@ -13,13 +14,10 @@ public class PrettyPrinter {
     }
 
     public func append(val: String): Unit {
-        val.runes().forEach(
-            {
-                r =>
-                    builder.append(r)
-                    if (r == r"\n") {
-                        builder.append(StringBuilder(r' ', 4 * indentation))
-                    }
+        val.runes().forEach({
+            r => builder.append(r)
+            if (r == r"\n") {
+                builder.append(StringBuilder(r' ', tabSize * indentation))
             }
         )
     }

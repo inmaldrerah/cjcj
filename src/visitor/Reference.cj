@@ -1,6 +1,6 @@
 package cjcj.visitor
 
-import cjcj.prettyPrinter.PrettyPrinter
+import cjcj.prettyPrinter.{PrettyPrinter, YamlPrinter}
 import cjcj.scanner.Token
 import std.collection.*
 
@@ -19,6 +19,10 @@ public open class Reference <: Expr & Equatable<Reference> & ToString {
 
     public open override func prettyPrint(printer: PrettyPrinter): Unit {
         printer.append(identifier.value)
+    }
+
+    public open override func yamlPrint(_: YamlPrinter): Unit {
+        throw UnsupportedException("Unimplemented method")
     }
 
     public open override func traverse<R>(_: Visitor<R>): R {

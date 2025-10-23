@@ -1,6 +1,6 @@
 package cjcj.visitor
 
-import cjcj.prettyPrinter.PrettyPrinter
+import cjcj.prettyPrinter.{PrettyPrinter, YamlPrinter}
 import cjcj.scanner.*
 
 /*
@@ -30,6 +30,11 @@ public open class TypeNode <: Node {
     }
 
     public open override func prettyPrint(_: PrettyPrinter): Unit {
+    }
+
+    public open override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("typeParameterName", typeParameterName)
+        printer.print("typeName", typeName)
     }
 
     public mut prop typeParameterName: Token {
@@ -73,6 +78,12 @@ public class PrimitiveType <: TypeNode {
         printer.append(typeName.value)
     }
 
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "PrimitiveType")
+        super.yamlPrint(printer)
+        printer.print("primitive", true)
+    }
+
     private func isPrimitive(typeName: Token): Bool {
         TokenKindHelper.CHAR_LANG_TYPES.iterator().any({t => t == typeName.kind})
     }
@@ -90,5 +101,11 @@ public class RefType <: TypeNode {
     public override func prettyPrint(printer: PrettyPrinter) {
         super.prettyPrint(printer)
         printer.append(typeName.value)
+    }
+
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "RefType")
+        super.yamlPrint(printer)
+        printer.print("primitive", false)
     }
 }

@@ -1,6 +1,6 @@
 package cjcj.visitor
 
-import cjcj.prettyPrinter.PrettyPrinter
+import cjcj.prettyPrinter.{PrettyPrinter, YamlPrinter}
 import cjcj.scanner.Token
 import cjcj.scanner.TokenKind
 import std.collection.ArrayList
@@ -87,6 +87,16 @@ public abstract class Decl <: Node & Equatable<Decl> {
         }
     }
 
+    public open override func yamlPrint(printer: YamlPrinter): Unit {
+        if (keyword.kind != TokenKind.ILLEGAL) {
+            printer.print("keyword", keyword)
+        }
+        if (keyword.kind != TokenKind.ILLEGAL) {
+            printer.print("identifier", identifier)
+        }
+        printer.printOptionalObject("declType", declType)
+    }
+
     public override operator func ==(other: Decl) {
         id == other.id
     }
@@ -140,6 +150,12 @@ public open class VarDecl <: Decl {
             ini.prettyPrint(printer)
         }
     }
+
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "VarDecl")
+        super.yamlPrint(printer)
+        printer.printOptionalObject("initializer", initializer)
+    }
 }
 
 public open class MainDecl <: Decl {
@@ -175,6 +191,13 @@ public open class MainDecl <: Decl {
         }
         printer.append(" ")
         block_.prettyPrint(printer)
+    }
+
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "MainDecl")
+        super.yamlPrint(printer)
+        printer.printOptionalObject("param", param)
+        printer.printObject("block", block)
     }
 
     public mut prop block: Block {
@@ -220,6 +243,13 @@ public class FuncParam <: Decl {
     public override func prettyPrint(printer: PrettyPrinter) {
         printer.append(paramType.typeParameterName.value + ": ")
         paramType.prettyPrint(printer)
+    }
+
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "FuncParam")
+        super.yamlPrint(printer)
+        printer.print("name", name)
+        printer.printObject("paramType", paramType)
     }
 
     public mut prop paramType: TypeNode {
@@ -287,6 +317,13 @@ public open class FuncDecl <: Decl {
         }
     }
 
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "FuncDecl")
+        super.yamlPrint(printer)
+        printer.printList("params", params)
+        printer.printOptionalObject("block", block)
+    }
+
     public mut prop block: ?Block {
         get() {
             block_
@@ -331,6 +368,13 @@ public open class ClassDecl <: Decl {
         body.prettyPrint(printer)
     }
 
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "ClassDecl")
+        super.yamlPrint(printer)
+        printer.printList("superTypes", superTypes)
+        printer.printObject("body", body)
+    }
+
     public open override func traverse<R>(v: Visitor<R>): R {
         v.visit(this)
     }
@@ -372,6 +416,13 @@ public open class InterfaceDecl <: Decl {
 
         printer.append(" ")
         body.prettyPrint(printer)
+    }
+
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "InterfaceDecl")
+        super.yamlPrint(printer)
+        printer.printList("superTypes", superTypes)
+        printer.printObject("body", body)
     }
 
     public open override func traverse<R>(v: Visitor<R>): R {

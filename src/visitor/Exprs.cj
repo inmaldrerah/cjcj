@@ -1,6 +1,6 @@
 package cjcj.visitor
 
-import cjcj.prettyPrinter.PrettyPrinter
+import cjcj.prettyPrinter.{PrettyPrinter, YamlPrinter}
 import cjcj.scanner.Token
 import cjcj.scanner.TokenKind
 import std.collection.ArrayList
@@ -19,6 +19,13 @@ public open class Expr <: Node {
     }
 
     public open override func prettyPrint(_: PrettyPrinter): Unit {}
+
+    public open func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "Expr")
+        let valuePrinter = PrettyPrinter()
+        prettyPrint(valuePrinter)
+        printer.print("value", '"' + valuePrinter.toString() + '"')
+    }
 }
 
 public class BinaryExpr <: Expr {
@@ -45,6 +52,13 @@ public class BinaryExpr <: Expr {
         left.prettyPrint(printer)
         printer.append(" ${oper.value} ")
         right.prettyPrint(printer)
+    }
+
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "BinaryExpr")
+        printer.printObject("left", left)
+        printer.print("oper", oper)
+        printer.printObject("right", right)
     }
 
     public mut prop left: Node {
@@ -97,6 +111,11 @@ public class ParenExpr <: Expr {
         printer.append(")")
     }
 
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "ParenExpr")
+        printer.printObject("parenthesizedExpr", parenthesizedExpr)
+    }
+
     public mut prop parenthesizedExpr: Expr {
         get() {
             parenthesizedExpr_
@@ -127,6 +146,14 @@ public class LitConstExpr <: Expr {
         match (literal.kind) {
             case TokenKind.STRING_LITERAL => printer.append("\"" + literal.value + "\"")
             case _ => printer.append(literal.value)
+        }
+    }
+
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "LitConstExpr")
+        match (literal.kind) {
+            case TokenKind.STRING_LITERAL => printer.print("literal", "\"" + literal.value + "\"")
+            case _ => printer.print("literal", literal.value)
         }
     }
 
@@ -161,6 +188,12 @@ public class UnaryExpr <: Expr {
     public override func prettyPrint(printer: PrettyPrinter) {
         printer.append("${oper.value}")
         right.prettyPrint(printer)
+    }
+
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "UnaryExpr")
+        printer.print("oper", oper)
+        printer.printObject("right", right)
     }
 
     public mut prop oper: Token {
@@ -206,6 +239,12 @@ public class AssignExpr <: Expr {
         right.prettyPrint(printer)
     }
 
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "AssignExpr")
+        printer.printObject("left", left)
+        printer.printObject("right", right)
+    }
+
     public mut prop left: Expr {
         get() {
             left_
@@ -249,6 +288,11 @@ public open class RefExpr <: Expr {
     public override func prettyPrint(printer: PrettyPrinter): Unit {
         printer.append(identifier.value)
     }
+
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "RefExpr")
+        printer.print("identifier", identifier)
+    }
 }
 
 public class Block <: Expr {
@@ -283,6 +327,11 @@ public class Block <: Expr {
             printer.unindent()
         }
         printer.append("\n}\n")
+    }
+
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "Block")
+        printer.printList("nodes", nodes)
     }
 
     public mut prop nodes: ArrayList<Node> {
@@ -326,6 +375,13 @@ public class IfExpr <: Expr {
         ifBlock.prettyPrint(printer)
         printer.append("else ")
         elseBranch.prettyPrint(printer)
+    }
+
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "IfExpr")
+        printer.printObject("condition", condition)
+        printer.printObject("ifBlock", ifBlock)
+        printer.printObject("elseBranch", elseBranch)
     }
 
     public mut prop condition: Expr {
@@ -381,6 +437,12 @@ public class WhileExpr <: Expr {
         block.prettyPrint(printer)
     }
 
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "WhileExpr")
+        printer.printObject("condition", condition)
+        printer.printObject("block", block)
+    }
+
     public mut prop condition: Expr {
         get() {
             condition_
@@ -434,6 +496,12 @@ public open class CallExpr <: Expr {
         printer.append(")")
     }
 
+    public open override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "CallExpr")
+        printer.printObject("callee", callee)
+        printer.printList("arguments", arguments)
+    }
+
     public prop callee: Node {
         get() {
             callee_
@@ -472,6 +540,12 @@ public class ReturnExpr <: Expr {
         if (let Some(e) <- expr) {
             e.prettyPrint(printer)
         }
+    }
+
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "ReturnExpr")
+        printer.printOptionalObject("expr", expr)
+        printer.print("keyword", keyword)
     }
 
     public mut prop expr: ?Expr {
@@ -513,6 +587,11 @@ public class JumpExpr <: Expr {
         printer.append(keyword.value)
     }
 
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "JumpExpr")
+        printer.print("keyword", keyword)
+    }
+
     public mut prop keyword: Token {
         get() {
             keyword_
@@ -540,6 +619,12 @@ public open class MemberAccess <: Expr {
     public override func prettyPrint(printer: PrettyPrinter): Unit {
         baseExpr.prettyPrint(printer)
         printer.append(".${field.value}")
+    }
+
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "MemberAccess")
+        printer.printObject("baseExpr", baseExpr)
+        printer.print("field", field)
     }
 
     public open override func traverse<R>(v: Visitor<R>): R {
@@ -581,6 +666,11 @@ public class PrimitiveTypeExpr <: Expr {
         printer.append(keyword.value)
     }
 
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "PrimitiveTypeExpr")
+        printer.print("keyword", keyword)
+    }
+
     public override func traverse<R>(v: Visitor<R>): R {
         v.visit(this)
     }
@@ -609,6 +699,11 @@ public class ThisSuperExpr <: Expr {
 
     public override func prettyPrint(printer: PrettyPrinter): Unit {
         printer.append(keyword.value)
+    }
+
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "ThisSuperExpr")
+        printer.print("keyword", keyword)
     }
 
     public override func traverse<R>(v: Visitor<R>): R {

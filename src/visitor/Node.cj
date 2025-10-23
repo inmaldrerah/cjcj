@@ -1,6 +1,6 @@
 package cjcj.visitor
 
-import cjcj.prettyPrinter.PrettyPrinter
+import cjcj.prettyPrinter.{PrettyPrinter, YamlPrintable, YamlPrinter}
 import std.collection.ArrayList
 import std.deriving.Derive
 
@@ -22,7 +22,7 @@ public struct NodeId <: Hashable {
     }
 }
 
-public abstract class Node <: Hashable & Equatable<Node> {
+public abstract class Node <: Hashable & Equatable<Node> & YamlPrintable {
     private var id_: NodeId
 
     public Node(id: NodeId) {
@@ -35,6 +35,20 @@ public abstract class Node <: Hashable & Equatable<Node> {
      * Print the node and its children as a piece of Cangjie code.
      */
     public func prettyPrint(printer: PrettyPrinter): Unit
+
+    public func yamlPrint(printer: YamlPrinter): Unit
+
+    public func prettyPrint(): String {
+        let printer: PrettyPrinter = PrettyPrinter()
+        prettyPrint(printer)
+        return printer.toString()
+    }
+
+    public func yamlPrint(): String {
+        let printer: YamlPrinter = YamlPrinter()
+        yamlPrint(printer)
+        return printer.toString()
+    }
 
     public mut prop id: NodeId {
         get() {
@@ -74,6 +88,11 @@ public class Argument <: Node {
         expr.prettyPrint(printer)
     }
 
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "Argument")
+        printer.printObject("expr", expr)
+    }
+
     public mut prop expr: Node {
         get() {
             expr_
@@ -104,6 +123,11 @@ public class Program <: Node {
                     printer.append("\n")
             }
         )
+    }
+
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "Program")
+        printer.printList("decls", decls)
     }
 
     public mut prop decls: ArrayList<Decl> {
@@ -141,6 +165,11 @@ public class Body <: Node {
         )
         printer.unindent()
         printer.append("\n}")
+    }
+
+    public override func yamlPrint(printer: YamlPrinter): Unit {
+        printer.print("type", "Body")
+        printer.printList("decls", decls)
     }
 
     public override func traverse<R>(v: Visitor<R>): R {
