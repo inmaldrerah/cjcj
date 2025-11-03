@@ -62,8 +62,8 @@ public class Parser {
             for (elem in e.getStackTrace()) {
                 builder.append("\n\tat ${elem.declaringClass}::${elem.methodName}(${elem.fileName}:${elem.lineNumber})")
             }
-            parserHelper.error(parserHelper.peek(), "Internal error during parsing:\n${e.toString()}${builder.toString()}",
-                parserHelper.current)
+            parserHelper.error(parserHelper.peek(),
+                "Internal error during parsing:\n${e.toString()}${builder.toString()}", parserHelper.current)
             return None
         }
     }
