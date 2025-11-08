@@ -151,10 +151,8 @@ public class LitConstExpr <: Expr {
 
     public override func yamlPrint(printer: YamlPrinter): Unit {
         printer.print("type", "LitConstExpr")
-        match (literal.kind) {
-            case TokenKind.STRING_LITERAL => printer.print("literal", "\"" + literal.value + "\"")
-            case _ => printer.print("literal", literal.value)
-        }
+        printer.print("kind", literal.kind)
+        printer.printLiteral("literal", literal)
     }
 
     public mut prop literal: Token {
