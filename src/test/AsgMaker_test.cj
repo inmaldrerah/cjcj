@@ -4,14 +4,13 @@ import cjcj.asg.AsgMaker
 import cjcj.visitor.*
 import cjcj.parser
 import cjcj.scanner.*
-
 import std.env.*
 import std.collection.ArrayList
 
 @Test
 class AsgMakerTests {
     private func scan(test: String): Array<Token> {
-        Scanner(test.toRuneArray()).scanTokens().toArray()  
+        Scanner(test.toRuneArray()).scanTokens().toArray()
     }
 
     private func parse(test: String): ?Program {
@@ -26,7 +25,7 @@ class AsgMakerTests {
         }
         @Fail("Couldn't parse the program")
     }
-    
+
     private func getAsg(test: String): Program {
         AsgMaker().resolve(getAst(test))
     }
@@ -40,7 +39,6 @@ class AsgMakerTests {
         }
         throw Exception("No main inside program")
     }
-
 
     @TestCase
     func mainDecl_test() {
@@ -163,9 +161,9 @@ class AsgMakerTests {
             }
             class b {
             }
-            class c {
+            interface c {
             }
-            class d {
+            interface d {
             }
             main(){
             }"""
@@ -233,9 +231,19 @@ class AsgMakerTests {
 
         let m: MainDeclWithRef = getMain(test)
         @Assert(m.block.nodes.iterator().all({ n => n is VarDeclWithRef }))
-        let decls: ArrayList<VarDeclWithRef> = m.block.nodes.iterator()
-            .map({ n => (n as VarDeclWithRef).getOrThrow() })
-            .fold(ArrayList(), { res, decl => res.add(decl); res })
+        let decls: ArrayList<VarDeclWithRef> = m
+            .block
+            .nodes
+            .iterator()
+            .map({n => (n as VarDeclWithRef).getOrThrow()})
+            .fold(
+                ArrayList(),
+                {
+                    res, decl =>
+                    res.add(decl);
+                    res
+                }
+            )
         @Expect(decls[0].initializer.isNone())
         @Expect(decls[1].initializer.isSome())
         @Expect(decls[2].initializer.isNone())
@@ -251,7 +259,6 @@ class AsgMakerTests {
         @Expect(decls[2].keyword.kind == TokenKind.VAR)
         @Expect(decls[3].keyword.kind == TokenKind.VAR)
     }
-
 
     @TestCase
     func binaryExpr_test() {
@@ -420,7 +427,6 @@ class AsgMakerTests {
         @Assert(m.block.nodes.iterator().all({ n => n is ReturnExpr }))
     }
 
-
     @TestCase
     func jumpExpr_test() {
         let test: String = """
@@ -469,7 +475,7 @@ class AsgMakerTests {
         @Assert(m.block.nodes.iterator().all({ n => n is MemberAccess }))
     }
 
-    @TestCase 
+    @TestCase
     func variableReference_test() {
         let testWrong: String = """
             main(){
@@ -488,7 +494,7 @@ class AsgMakerTests {
         getAsg(testRight)
     }
 
-    @TestCase 
+    @TestCase
     func functionReference_test() {
         let testWrong: String = """
             main(){
@@ -505,11 +511,11 @@ class AsgMakerTests {
                 let b = f(1, 2)
             }
         """
-        
+
         getAsg(testRight)
     }
 
-    @TestCase 
+    @TestCase
     func recursiveFunction_test() {
         let testWrong: String = """
             main(){
@@ -533,7 +539,7 @@ class AsgMakerTests {
         getAsg(testRight)
     }
 
-    @TestCase 
+    @TestCase
     func unorderedDeclarations_test() {
         var testRight: String = """
             let a = f()
@@ -574,7 +580,7 @@ class AsgMakerTests {
         getAsg(testRight)
     }
 
-    @TestCase 
+    @TestCase
     func selfInitClass_test() {
         var testRight: String = """
             class D{
@@ -590,7 +596,7 @@ class AsgMakerTests {
         getAsg(testRight)
     }
 
-    @TestCase 
+    @TestCase
     func unorderedClassDeclaration_test() {
         var testRight: String = """
             class B <: A{
@@ -723,7 +729,7 @@ class AsgMakerTests {
         @AssertThrows[Exception](getAsg(testWrong))
     }
 
-    @TestCase 
+    @TestCase
     func interfaceDeclaration_test() {
         var testRight: String = """
         interface I {
@@ -748,7 +754,7 @@ class AsgMakerTests {
         @AssertThrows[Exception](getAsg(testWrong))
     }
 
-    @TestCase 
+    @TestCase
     func interfaceDeclarationComplex_test() {
         var testRight: String = """
         let c: Int64 = 1
@@ -786,7 +792,7 @@ class AsgMakerTests {
         @AssertThrows[Exception](getAsg(testWrong))
     }
 
-    @TestCase 
+    @TestCase
     func interfaceInstance_test() {
         var testWrong: String = """
         interface I {
@@ -813,7 +819,7 @@ class AsgMakerTests {
     }
 
     @TestCase
-    func asgMakerTest1() {
+    func total_test() {
         let test: String = """
             main(args: Int64) {
                 func aa(b: Int64, h: Int32): Int64 {
@@ -835,7 +841,7 @@ class AsgMakerTests {
     }
 
     @TestCase
-    func asgMakerTest2() {
+    func totalComplex_test() {
         let test: String = """
             class Type{
             }
@@ -879,46 +885,248 @@ class AsgMakerTests {
             """
         getAsg(test)
     }
+
+    /* If a class inherits a interface, it should implement all member functions of the interface */
+    @TestCase
+    func interfaceInheritanceFunctionRule_test() {
+        var testWrong = """
+            interface I {
+                func a(): Int64
+            }
+
+            class C <: I {
+            }
+
+            main() {
+            }
+        """
+
+        @AssertThrows[Exception](getAsg(testWrong))
+
+        var testRight = """
+            interface I {
+                func a(): Int64
+            }
+            class C <: I {
+                func a() {
+                    1
+                }
+            }
+
+            main() {
+            }
+        """
+
+        getAsg(testRight)
+    }
+
+    /* If a class inherits a interface, it should implement all member functions of the interface */
+    @TestCase
+    func interfaceInheritanceFunctionRuleComplex_test() {
+        var testWrong = """
+            interface J {
+                func b(): Int64
+            }
+            interface I <: J {
+                func a(): Int64
+            }
+
+            class C <: I {
+                func a() { 1 }
+            }
+
+            main() {
+            }
+        """
+
+        @AssertThrows[Exception](getAsg(testWrong))
+
+        testWrong = """
+            class A { }
+            class B { }
+            class AB { }
+
+            interface I {
+                func f(p1: A, p2: B): Int64
+            }
+
+            class C <: I {
+                func f(p1: AB) { 1 }
+            }
+
+            main() {
+            }
+        """
+
+        @AssertThrows[Exception](getAsg(testWrong))
+
+        var testRight = """
+            interface J {
+                func b(): Int64
+            }
+            interface I <: J {
+                func a(): Int64
+            }
+
+            class C <: I {
+                func a() { 1 }
+                func b() { 1 }
+            }
+
+            main() {
+            }
+        """
+
+        getAsg(testRight)
+
+        testRight = """
+            interface I {
+                func f(): Int64
+            }
+            interface J {
+                func f(): Int64
+            }
+
+            class C <: I & J {
+                func f() { 1 }
+            }
+
+            main() {
+            }
+        """
+
+        getAsg(testRight)
+    }
+
+    @TestCase
+    func classInheritanceRule_test() {
+        var testWrong = """
+            class S {
+            }
+            interface I {
+            }
+
+            class C <: I & S {
+            }
+            main() {
+            }
+        """
+        @AssertThrows[Exception](getAsg(testWrong))
+
+        testWrong = """
+            class S {
+            }
+            class S2 {
+            }
+
+            class C <: S & S2 {
+            }
+            main() {
+            }
+        """
+        @AssertThrows[Exception](getAsg(testWrong))
+
+        var testRight = """
+            class S {
+            }
+            interface I {
+            }
+
+            class C <: S & I{
+            }
+            main() {
+            }
+        """
+
+        getAsg(testRight)
+    }
+
+    @TestCase
+    func classInheritedMemberAccessRule_test() {
+        var testWrong = """
+            class S {
+                let a: Int64 = 1
+            }
+            interface I {
+                func a(): Int64 {
+                    1
+                }
+            }
+
+            class C <: S & I {
+            }
+
+            main() {
+            }        
+        """
+
+        @AssertThrows[Exception](getAsg(testWrong))
+
+        var testRight = """
+            class S {
+                let a: Int64 = 1
+            }
+            interface I {
+                func a(): Int64 {
+                    1
+                }
+            }
+
+            class C <: S & I {
+                func a(): Int64 {
+                    1
+                }
+            }
+
+            main() {
+            }
+        """
+
+        getAsg(testRight)
+    }
+
+    @TestCase
+    func memberShadowing_test() {
+        let testFunc: String = """
+            class c {
+                let cvar = 5
+                func f() {
+                }
+            }
+            class a <: b {
+                func f() {
+                }
+                init() {
+                }
+            }
+            class b <: c {
+                func bfunc() {
+                }
+            }
+            main(){
+                let a = a()
+                let v: Int64 = a.cvar
+                let f: Unit = a.bfunc()
+            }"""
+        @AssertThrows[Exception](getAsg(testFunc))
+        let testVar: String = """
+            class c {
+                let cvar = 5
+            }
+            class a <: b {
+                let cvar = 2
+                init() {
+                }
+            }
+            class b <: c {
+                func bfunc() {
+                }
+            }
+            main(){
+                let a = a()
+                let v: Int64 = a.cvar
+                let f: Unit = a.bfunc()
+            }"""
+        @AssertThrows[Exception](getAsg(testVar))
+    }
 }
-
-
-// interface I {
-//     func f(): Int64
-// }
-
-// interface J {
-//     func f(): Int64
-// }
-
-// class C <: I & J {
-
-// }
-
-// let var2 = 1
-
-// interface I {
-//     func f() {
-//         1
-//     }
-// }
-
-// class C <: S & I {
-//     init() {
-//         // let var2 = 1
-//         let c = var2
-//         let d = f()
-//     }
-
-//     override public func f() {
-//         1
-//     }
-// }
-
-// open class S {
-//     let var2 = "test"
-// }
-
-// func f(a: Int64): Int64 { 1 }
-// func f(a: Hashable): Int64 { 1 }
-
-// let a = f
