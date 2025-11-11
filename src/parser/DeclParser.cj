@@ -854,6 +854,11 @@ internal open class DeclParser {
         // the problem will be solved.
         if (helper.matches(TKH.PREFIX_UNARY_OPERATOR)) {
             let oper: Token = helper.previous()
+            if (oper.kind == TK.SUB && helper.matches(TK.INTEGER_LITERAL, TK.FLOAT_LITERAL)) {
+                let literal: Token = helper.previous()
+                return LitConstExpr(NodeIdManager.nextId(),
+                    Token(literal.kind, "-" + literal.value, oper.pos))
+            }
             let right: Expr = expectExpression(prefixUnaryExpression,
                 "Expected a postfixExpression after ${oper.value}, found '\u{001b}[31m${helper.peek().value}\u{001b}[0m'")
             return UnaryExpr(NodeIdManager.nextId(), oper, right)
