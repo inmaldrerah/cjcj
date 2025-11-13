@@ -145,7 +145,7 @@ public class Scanner {
                     if (!matches(r'\'')) {
                         println("Line: ${line} , Unterminated byte rune literal.")
                     }
-                    addToken(TokenKind.RUNE_BYTE_LITERAL, advance())
+                    addToken(TokenKind.RUNE_BYTE_LITERAL)
                 } else {
                     identifier()
                 }
