@@ -690,7 +690,7 @@ internal open class DeclParser {
                      * eventually parse.
                      */
                     try {
-                        if (let Some(value) <- leftValueExpression() && helper.matches(TKH.ASSIGNMENT_OPERATOR) && let Some(right) <- logicConjunctionExpression()) {
+                        if (let Some(value) <- leftValueExpression() && helper.matches(TKH.ASSIGNMENT_OPERATOR) && let Some(right) <- logicDisjunctionExpression()) {
                             return AssignExpr(NodeIdManager.nextId(), value, right)
                         }
                     } catch (e: Exception) {
